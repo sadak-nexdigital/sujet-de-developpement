@@ -1,0 +1,9 @@
+http:
+   port: "8081"
+
+
+flights:
+  host: "api.flightstats.com"
+  port:""
+  acces_key: 
+  protocol: "https"

@@ -1,0 +1,462 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd ">
+    <http:listener-config name="sys-ontime-flightstats-api-httpListenerConfig">
+        <http:listener-connection host="${http.host}" port="${http.port}" />
+    </http:listener-config>
+    <apikit:config name="sys-ontime-flightstats-api-config" api="sys-ontime-flightstats-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <flow name="sys-ontime-flightstats-api-main">
+        <http:listener config-ref="sys-ontime-flightstats-api-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="sys-ontime-flightstats-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="sys-ontime-flightstats-api-console">
+        <http:listener config-ref="sys-ontime-flightstats-api-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="sys-ontime-flightstats-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="get:\flights:sys-ontime-flightstats-api-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  request: {
+    flightId: {
+      requested: "1035695456",
+      interpreted: 1035695456
+    },
+    includeFlightPlan: {
+      requested: "false",
+      interpreted: false
+    },
+    maxPositions: {
+      requested: "2",
+      interpreted: 2
+    },
+    maxPositionAgeMinutes: {},
+    appendix: {
+      airlines: [
+        {
+          fs: "FX",
+          iata: "FX",
+          icao: "FDX",
+          name: "FedEx",
+          active: true
+        }
+      ],
+      airports: [
+        {
+          fs: "HNL",
+          iata: "HNL",
+          icao: "PHNL",
+          faa: "PHNL",
+          name: "Daniel K. Inouye International Airport",
+          street1: "300 Rodgers Blvd., #12",
+          city: "Honolulu",
+          cityCode: "HNL",
+          stateCode: "HI",
+          postalCode: "96819",
+          countryCode: "US",
+          countryName: "United States",
+          regionName: "North America",
+          timeZoneRegionName: "Pacific/Honolulu",
+          weatherZone: "HIZ002",
+          localTime: "2020-04-07T14:01:18.362",
+          utcOffsetHours: -10,
+          latitude: 21.325833,
+          longitude: -157.921667,
+          elevationFeet: 13,
+          classification: 1,
+          active: true
+        }, 
+        {
+          fs: "KIX",
+          iata: "KIX",
+          icao: "RJBB",
+          faa: "",
+          name: "Kansai International Airport",
+          street1: "1 Senshukukokita, Izumisano",
+          street2: "Osaka Prefecture",
+          city: "Osaka",
+          cityCode: "OSA",
+          countryCode: "JP",
+          countryName: "Japan",
+          regionName: "Asia",
+          timeZoneRegionName: "Asia/Tokyo",
+          weatherZone: "",
+          localTime: "2020-04-08T09:01:18.362",
+          utcOffsetHours: 9,
+          latitude: 34.43533,
+          longitude: 135.243977,
+          elevationFeet: 15,
+          classification: 2,
+          active: true
+        }
+      ]
+    },
+    flightTrack: {
+      flightId: 1035695456,
+      carrierFsCode: "FX",
+      flightNumber: "5004",
+      tailNumber: "N865FD",
+      callsign: "FDX5004",
+      departureAirportFsCode: "HNL",
+      arrivalAirportFsCode: "KIX",
+      departureDate: {
+        dateLocal: "2020-04-02T15:02:00.000",
+        dateUtc: "2020-04-03T01:02:00.000Z"
+      },
+      equipment: "77X",
+      delayMinutes: 70,
+      bearing: 241.2918733199988,
+      heading: 50.621501261041075,
+      positions: [
+        {
+          lon: 135.2791,
+          lat: 34.4512,
+          speedMph: 140,
+          altitudeFt: 15,
+          source: "derived",
+          date: "2020-04-03T11:00:56.000Z"
+        }, 
+        {
+          lon: 135.2151,
+          lat: 34.4079,
+          speedMph: 165,
+          altitudeFt: 153,
+          source: "derived",
+          date: "2020-04-03T10:59:12.000Z"
+        }
+      ]
+    }
+  },
+  request2: {
+    flightId: {
+      requested: "1035695798",
+      interpreted: 1035695798
+    },
+    includeFlightPlan: {
+      requested: "false",
+      interpreted: false
+    },
+    maxPositions: {
+      requested: "2",
+      interpreted: 2
+    },
+    maxPositionAgeMinutes: {},
+    extendedOptions: {}
+  },
+  appendix: {
+    airlines: [
+      {
+        fs: "NH",
+        iata: "NH",
+        icao: "ANA",
+        name: "ANA",
+        phoneNumber: "1-800-235-9262",
+        active: true
+      }
+    ],
+    airports: [
+      {
+        fs: "BKK",
+        iata: "BKK",
+        icao: "VTBS",
+        faa: "",
+        name: "Suvarnabhumi Airport",
+        city: "Bangkok",
+        cityCode: "BKK",
+        countryCode: "TH",
+        countryName: "Thailand",
+        regionName: "Asia",
+        timeZoneRegionName: "Asia/Bangkok",
+        weatherZone: "",
+        localTime: "2020-04-04T00:18:41.912",
+        utcOffsetHours: 7,
+        latitude: 13.693062,
+        longitude: 100.752044,
+        elevationFeet: 9,
+        classification: 1,
+        active: true
+      }, 
+      {
+        fs: "NRT",
+        iata: "NRT",
+        icao: "RJAA",
+        faa: "",
+        name: "Narita International Airport",
+        street1: "成田空港第2PTB(バス), Narita",
+        street2: "Chiba Prefecture",
+        city: "Tokyo",
+        cityCode: "TYO",
+        countryCode: "JP",
+        countryName: "Japan",
+        regionName: "Asia",
+        timeZoneRegionName: "Asia/Tokyo",
+        weatherZone: "",
+        localTime: "2020-04-04T02:18:41.912",
+        utcOffsetHours: 9,
+        latitude: 35.773213,
+        longitude: 140.387443,
+        elevationFeet: 135,
+        classification: 1,
+        active: true
+      }
+    ]
+  },
+  flightTrack: {
+    flightId: 1035695798,
+    carrierFsCode: "NH",
+    flightNumber: "806",
+    departureAirportFsCode: "BKK",
+    arrivalAirportFsCode: "NRT",
+    departureDate: {
+      dateLocal: "2020-04-03T06:45:00.000",
+      dateUtc: "2020-04-02T23:45:00.000Z"
+    },
+    equipment: "773",
+    bearing: 50.936612691117354,
+    positions: []
+  }
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="get:\flights\(flightID):sys-ontime-flightstats-api-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+            <ee:variables>
+                <ee:set-variable variableName="flightID">attributes.uriParams.'flightID'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  request: {
+    flightId: {
+      requested: "1035695456",
+      interpreted: 1035695456
+    },
+    includeFlightPlan: {
+      requested: "false",
+      interpreted: false
+    },
+    maxPositions: {
+      requested: "2",
+      interpreted: 2
+    },
+    maxPositionAgeMinutes: {},
+    extendedOptions: {}
+  },
+  appendix: {
+    airlines: [
+      {
+        fs: "FX",
+        iata: "FX",
+        icao: "FDX",
+        name: "FedEx",
+        active: true
+      }
+    ],
+    airports: [
+      {
+        fs: "HNL",
+        iata: "HNL",
+        icao: "PHNL",
+        faa: "PHNL",
+        name: "Daniel K. Inouye International Airport",
+        street1: "300 Rodgers Blvd., #12",
+        city: "Honolulu",
+        cityCode: "HNL",
+        stateCode: "HI",
+        postalCode: "96819",
+        countryCode: "US",
+        countryName: "United States",
+        regionName: "North America",
+        timeZoneRegionName: "Pacific/Honolulu",
+        weatherZone: "HIZ002",
+        localTime: "2020-04-07T14:01:18.362",
+        utcOffsetHours: -10,
+        latitude: 21.325833,
+        longitude: -157.921667,
+        elevationFeet: 13,
+        classification: 1,
+        active: true
+      }, 
+      {
+        fs: "KIX",
+        iata: "KIX",
+        icao: "RJBB",
+        faa: "",
+        name: "Kansai International Airport",
+        street1: "1 Senshukukokita, Izumisano",
+        street2: "Osaka Prefecture",
+        city: "Osaka",
+        cityCode: "OSA",
+        countryCode: "JP",
+        countryName: "Japan",
+        regionName: "Asia",
+        timeZoneRegionName: "Asia/Tokyo",
+        weatherZone: "",
+        localTime: "2020-04-08T09:01:18.362",
+        utcOffsetHours: 9,
+        latitude: 34.43533,
+        longitude: 135.243977,
+        elevationFeet: 15,
+        classification: 2,
+        active: true
+      }
+    ]
+  },
+  flightTrack: {
+    flightId: 1035695456,
+    carrierFsCode: "FX",
+    flightNumber: "5004",
+    tailNumber: "N865FD",
+    callsign: "FDX5004",
+    departureAirportFsCode: "HNL",
+    arrivalAirportFsCode: "KIX",
+    departureDate: {
+      dateLocal: "2020-04-02T15:02:00.000",
+      dateUtc: "2020-04-03T01:02:00.000Z"
+    },
+    equipment: "77X",
+    delayMinutes: 70,
+    bearing: 241.2918733199988,
+    heading: 50.621501261041075,
+    positions: [
+      {
+        lon: 135.2791,
+        lat: 34.4512,
+        speedMph: 140,
+        altitudeFt: 15,
+        source: "derived",
+        date: "2020-04-03T11:00:56.000Z"
+      }, 
+      {
+        lon: 135.2151,
+        lat: 34.4079,
+        speedMph: 165,
+        altitudeFt: 153,
+        source: "derived",
+        date: "2020-04-03T10:59:12.000Z"
+      }
+    ]
+  }
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+</mule>

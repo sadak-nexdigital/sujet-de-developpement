@@ -1,0 +1,97 @@
+#%RAML 1.0 DataType
+
+type: object
+properties:  
+  request:
+    type: object
+    required: false
+    properties:
+      flightId:
+        type: object
+        required: false
+        properties:
+          requested: string
+          interpreted: integer
+  airlines: 
+    type: object
+    required: false
+    properties:      
+      fs: string
+      iata: string
+      icao: string
+      name: string
+      active: boolean
+  airports:
+    type: object
+    required: false
+    properties:         
+      fs: string
+      iata: string
+      icao: string
+      faa: string
+      name: string
+      street1: string
+      city: string
+      cityCode: string
+      stateCode: string
+      postalCode: integer
+      countryCode: string
+      countryName: string
+      regionName: string
+      timeZoneRegionName: string
+      weatherZone: string
+      localTime: datetime
+      utcOffsetHours: integer
+      latitude: integer
+      longitude: integer
+      elevationFeet: integer
+      classification: integer
+      active: boolean      
+  flightTrack:
+    type: object
+    required: false
+    properties:            
+      flightId: integer
+      carrierFsCode: string
+      flightNumber: string
+      tailNumber?: string
+      callsign?: string
+      departureAirportFsCode: string
+      arrivalAirportFsCode: string
+  departureDate:
+    type: object
+    required: false
+    properties:               
+      dateLocal": datetime
+      dateUtc": datetime
+  equipment:
+    type: object
+    required: false
+    properties:
+      equipment: string
+  delayMinutes:
+    type: object
+    required: false
+    properties:
+      delayMinutes: integer
+  bearing:
+    type: object
+    required: false
+    properties:
+      bearing: number
+  heading:
+    type: object
+    required: false
+    properties:
+      heading: number
+  positions:
+    type: object
+    required: false
+    properties:
+      lon: number
+      lat: number
+      speedMph: integer
+      altitudeFt: integer
+      source: string
+      date: datetime
+  

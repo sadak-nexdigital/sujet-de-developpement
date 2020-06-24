@@ -1,0 +1,54 @@
+#%RAML 1.0
+title: sys-ontime-flightstats-api
+
+types:
+  sys-ontime-flightstats: !include data_types/Flight_dataType.raml
+
+traits:
+  client-id-required:
+    headers:
+      client_id:
+        type: string
+      client_secret:
+        type: string
+    responses:
+      401:
+        description: Unauthorized, The client_id or client_secret are not valid or the client does not have access.
+      429:
+        description: The client used all of it's request quota for the current period.
+      500:
+        description: An error ocurred, see the specific message (Only if it is a WSDL enpoint).
+      503:
+        description: Contracts Information Unreachable.
+
+  
+/flights:
+ is: [client-id-required]
+ get:
+   displayName: Get list of flights
+   queryParameters:
+     departureAirportFScode:
+      displayName: Departure airport code
+      required: false
+          
+     arrivalAirportFScode:
+       displayName: Arrival airport code
+       required: false
+   responses:
+     200:
+       body:
+         application/json:
+           type: sys-ontime-flightstats
+           example: !include examples/Flight_example.json
+
+         
+ /{flightID}:
+  is: [client-id-required]
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: sys-ontime-flightstats
+            example: !include examples/Flight_exampleID.json
+            
